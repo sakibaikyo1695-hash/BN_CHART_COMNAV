@@ -1,0 +1,637 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>BN Chart 70001 by Sadman</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+  --navy: #0a1628;
+  --navy2: #0f2040;
+  --accent: #00d4ff;
+  --accent2: #0099cc;
+  --gold: #f0c040;
+  --panel: #0d1e38;
+  --border: rgba(0,212,255,0.25);
+  --text: #c8e4f0;
+  --sidebar-w: 360px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; padding: 0;
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--navy);
+  color: var(--text);
+}
+
+#map {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 0; right: var(--sidebar-w);
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* scrollbar */
+#sidebar::-webkit-scrollbar { width: 5px; }
+#sidebar::-webkit-scrollbar-track { background: var(--navy); }
+#sidebar::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 3px; }
+
+/* ── HEADER ── */
+#sidebar-header {
+  background: linear-gradient(135deg, #0a2040 0%, #0a3060 100%);
+  border-bottom: 2px solid var(--accent);
+  padding: 14px 16px 10px;
+  flex-shrink: 0;
+}
+
+#sidebar-header h2 {
+  margin: 0 0 2px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+#sidebar-header .subtitle {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--gold);
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+
+/* ── SECTION ── */
+.section {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+}
+
+.section-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.7;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+/* ── INPUTS ── */
+.coord-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.coord-row label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.coord-row input {
+  flex: 1;
+  background: rgba(0,212,255,0.07);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 5px 7px;
+  border-radius: 3px;
+  min-width: 0;
+  transition: border 0.2s;
+}
+
+.coord-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(0,212,255,0.12);
+}
+
+.coord-row select {
+  background: rgba(0,212,255,0.1);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.coord-row span {
+  color: var(--accent);
+  font-size: 13px;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 13px;
+  margin: 2px;
+  border-radius: 3px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all 0.18s;
+  background: var(--accent2);
+  color: #fff;
+}
+
+.btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn-primary { background: linear-gradient(135deg, #0077aa, #00aadd); }
+.btn-danger   { background: linear-gradient(135deg, #8b1a1a, #cc2222); }
+.btn-purple   { background: linear-gradient(135deg, #4a1a7a, #7733bb); }
+.btn-muted    { background: #1e3050; color: #8ab; }
+
+.btn-sm { padding: 4px 9px; font-size: 12px; margin: 1px; }
+
+.btn-full {
+  width: 100%;
+  margin: 3px 0;
+  padding: 9px 13px;
+  font-size: 14px;
+}
+
+/* ── SPEED ── */
+.speed-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.speed-row input {
+  flex: 1;
+  background: rgba(0,212,255,0.07);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: 3px;
+}
+
+.speed-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.speed-row span {
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+/* ── WAYPOINTS LIST ── */
+#list { display: flex; flex-direction: column; gap: 4px; }
+
+.waypoint-item {
+  background: rgba(0,212,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 7px 9px;
+}
+
+.waypoint-item:hover { background: rgba(0,212,255,0.09); }
+
+.wp-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.wp-coords {
+  font-size: 11px;
+  font-family: 'Share Tech Mono', monospace;
+  color: #78a8c8;
+  margin: 2px 0 5px;
+}
+
+.wp-actions { display: flex; gap: 3px; flex-wrap: wrap; }
+
+/* ── COORDS OUT ── */
+#coordsOut {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  background: rgba(0,212,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 6px 8px;
+  min-height: 28px;
+  letter-spacing: 0.5px;
+}
+
+/* ── ROUTE SUMMARY ── */
+#routeSummary {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: #a8d4e8;
+  line-height: 1.7;
+  padding: 6px 0 0;
+}
+
+#routeSummary b { color: var(--gold); }
+
+/* ── CREDIT ── */
+#credit {
+  position: absolute;
+  bottom: 10px;
+  right: calc(var(--sidebar-w) + 10px);
+  background: rgba(10, 22, 40, 0.88);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 5px 12px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  box-shadow: 0 0 12px rgba(0,212,255,0.2);
+  z-index: 1000;
+}
+
+/* ── LEAFLET OVERRIDES ── */
+.leaflet-control-zoom a {
+  background: var(--panel) !important;
+  color: var(--accent) !important;
+  border-color: var(--border) !important;
+  font-weight: 700;
+}
+
+.leaflet-control-zoom a:hover { background: var(--navy2) !important; }
+
+.leaflet-popup-content-wrapper {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.leaflet-popup-tip { background: var(--panel); }
+
+/* ── TV / LARGE SCREEN ── */
+@media (min-width: 1600px) {
+  :root { --sidebar-w: 400px; }
+  #sidebar-header h2 { font-size: 26px; }
+  .section { padding: 14px 18px; }
+  .btn { font-size: 15px; padding: 9px 15px; }
+  .btn-sm { font-size: 13px; padding: 5px 11px; }
+  .wp-name { font-size: 16px; }
+  .wp-coords { font-size: 12px; }
+  #coordsOut { font-size: 13px; }
+  #routeSummary { font-size: 12px; }
+  .coord-row input, .coord-row select { font-size: 14px; padding: 7px 8px; }
+  #credit { font-size: 14px; letter-spacing: 3px; padding: 6px 16px; }
+}
+
+@media (min-width: 2000px) {
+  :root { --sidebar-w: 460px; }
+  #sidebar-header h2 { font-size: 30px; }
+  .btn { font-size: 17px; }
+  .wp-name { font-size: 18px; }
+  #routeSummary { font-size: 13px; }
+}
+
+/* ── MOBILE ── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 100%; }
+  #map { right: 0; bottom: 45%; }
+  #sidebar { width: 100%; top: auto; bottom: 0; height: 45%; border-left: none; border-top: 1px solid var(--border); }
+  #credit { right: 10px; bottom: 46%; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+<div id="credit">MADE BY LT CDR SADMAN, P NO 3223</div>
+
+<div id="sidebar">
+
+  <!-- HEADER -->
+  <div id="sidebar-header">
+    <h2>BN Chart System</h2>
+    <div class="subtitle">Chart 70001 &nbsp;·&nbsp; Navigation Planner</div>
+  </div>
+
+  <!-- JUMP TO -->
+  <div class="section">
+    <div class="section-title">Jump to Location</div>
+    <div class="coord-row">
+      <label>LAT</label>
+      <input id="latDeg" placeholder="Deg" type="text"/>
+      <span>°</span>
+      <input id="latMin" placeholder="Min" type="text"/>
+      <span>'</span>
+      <select id="latDir"><option value="N">N</option><option value="S">S</option></select>
+    </div>
+    <div class="coord-row">
+      <label>LON</label>
+      <input id="lonDeg" placeholder="Deg" type="text"/>
+      <span>°</span>
+      <input id="lonMin" placeholder="Min" type="text"/>
+      <span>'</span>
+      <select id="lonDir"><option value="E">E</option><option value="W">W</option></select>
+    </div>
+    <button id="goBtn" class="btn btn-primary btn-full">▶ Go / Add Waypoint</button>
+  </div>
+
+  <!-- WAYPOINTS -->
+  <div class="section">
+    <div class="section-title">Waypoints</div>
+    <div class="small" style="font-size:11px;color:#78a;margin-bottom:8px;">Click map to add · Click waypoint marker to select</div>
+    <div id="list"></div>
+  </div>
+
+  <!-- ROUTE -->
+  <div class="section">
+    <div class="section-title">Route Planning</div>
+    <div class="speed-row">
+      <span>SPEED</span>
+      <input id="speedInput" placeholder="knots" type="text"/>
+      <span>KN</span>
+    </div>
+    <div style="display:flex;gap:4px;margin-top:8px;">
+      <button id="routeBtn" class="btn btn-primary" style="flex:1">📍 Route Selected</button>
+      <button id="clearRouteBtn" class="btn btn-muted" style="flex:1">✕ Clear</button>
+    </div>
+  </div>
+
+  <!-- COORDS & SUMMARY -->
+  <div class="section" style="flex:1">
+    <div class="section-title">Cursor Position</div>
+    <div id="coordsOut">—</div>
+    <div id="routeSummary"></div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// ================= MAP =================
+const map = L.map('map', { minZoom:2, maxZoom:18 });
+
+// ================= ALL CHART TILES =================
+// Bounds format: [[south, west], [north, east]]
+const tiles = [
+  // ── ORIGINAL ──
+  { image:'70001.JPG',  bounds:[[20.42333, 89.0],   [22.66667, 92.0]] },
+  { image:'one.JPG',    bounds:[[20.0,     92.0],   [21.0,     92.8333]] },
+  { image:'two.JPG',    bounds:[[21.0,     92.0],   [22.0,     92.8333]] },
+  { image:'three.JPG',  bounds:[[19.0,     90.5],   [20.4233,  92.0]] },
+  { image:'four.JPG',   bounds:[[19.0,     89.125], [20.4233,  91.0]] },
+  { image:'five.JPG',   bounds:[[17.0,     89.0],   [19.0,     91.0]] },
+
+  // ── NEW TILES ──
+  // 1. mini.JPG  — 22°N to 22°40'N, 92°E to 92°50'E
+  { image:'mini.JPG',   bounds:[[22.0,     92.0],   [22.66667, 92.83333]] },
+
+  // 2. chini.JPG — 19°N to 20°N, 92°E to 92°50'E
+  { image:'chini.JPG',  bounds:[[19.0,     92.0],   [20.0,     92.83333]] },
+
+  // 3. kini.JPG  — 17°N to 19°N, 91°E to 92°50'E
+  { image:'kini.JPG',   bounds:[[17.0,     91.0],   [19.0,     92.83333]] },
+
+  // 4. rini.JPG  — 19°N to 20°25.5'N, 89°E to 89°7.5'E
+  { image:'rini.JPG',   bounds:[[19.0,     89.0],   [20.425,   89.125]] }
+];
+
+const overlays = [];
+tiles.forEach(t => {
+  const o = L.imageOverlay(t.image, t.bounds).addTo(map);
+  overlays.push(o);
+});
+
+// Fit to all tiles
+const group = L.featureGroup(overlays);
+map.fitBounds(group.getBounds());
+
+// ================= DATA =================
+let waypoints = [];
+let markers = {};
+let selected = [];
+let routeLayer = null;
+let checkpointMarkers = [];
+
+const listDiv       = document.getElementById('list');
+const coordsOut     = document.getElementById('coordsOut');
+const routeSummaryDiv = document.getElementById('routeSummary');
+
+// ================= COORD CONVERSION =================
+function decimalToDMS(decimal, isLat) {
+  const absolute = Math.abs(decimal);
+  const degrees = Math.floor(absolute);
+  const minutesDecimal = (absolute - degrees) * 60;
+  const minutes = minutesDecimal.toFixed(3);
+  const direction = isLat ? (decimal >= 0 ? 'N' : 'S') : (decimal >= 0 ? 'E' : 'W');
+  return `${degrees}° ${minutes}' ${direction}`;
+}
+
+function formatCoordinates(lat, lon) {
+  return `${decimalToDMS(lat, true)}, ${decimalToDMS(lon, false)}`;
+}
+
+function dmsToDecimal(degrees, minutes, direction) {
+  let decimal = parseFloat(degrees) + parseFloat(minutes) / 60;
+  if (direction === 'S' || direction === 'W') decimal = -decimal;
+  return decimal;
+}
+
+// ================= FUNCTIONS =================
+function renderList() {
+  listDiv.innerHTML = '';
+  waypoints.forEach(w => {
+    const div = document.createElement('div');
+    div.className = 'waypoint-item';
+    div.innerHTML = `
+      <div class="wp-name">${w.name}</div>
+      <div class="wp-coords">${formatCoordinates(w.lat, w.lon)}</div>
+      <div class="wp-actions">
+        <button class="btn btn-muted btn-sm" onclick="editWaypoint(${w.id})">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteWaypoint(${w.id})">🗑️ Del</button>
+        <button class="btn btn-purple btn-sm" onclick="selectWaypoint(${w.id})">🎯 Select</button>
+      </div>
+    `;
+    listDiv.appendChild(div);
+  });
+}
+
+function addWaypoint(lat, lon, name) {
+  const id = Date.now() + Math.floor(Math.random() * 999);
+  const wp = { id, lat, lon, name: name || ('WP-' + (waypoints.length + 1)) };
+  waypoints.push(wp);
+
+  const marker = L.circleMarker([lat, lon], {
+    radius: 6, color: '#f00', fillColor: '#f00', fillOpacity: 0.9
+  })
+  .addTo(map)
+  .bindPopup(`<b>${wp.name}</b><br>${formatCoordinates(lat, lon)}`);
+
+  marker.on('click', () => selectWaypoint(wp.id));
+  markers[id] = marker;
+
+  renderList();
+  saveLocal();
+}
+
+function editWaypoint(id) {
+  const wp = waypoints.find(w => w.id === id);
+  if (!wp) return;
+  const newName = prompt('Rename waypoint:', wp.name);
+  if (newName !== null && newName.trim() !== '') wp.name = newName.trim();
+  renderList(); saveLocal();
+}
+
+function deleteWaypoint(id) {
+  if (!confirm('Delete this waypoint?')) return;
+  waypoints = waypoints.filter(w => w.id !== id);
+  map.removeLayer(markers[id]);
+  delete markers[id];
+  renderList(); saveLocal();
+}
+
+function selectWaypoint(id) {
+  const idx = selected.indexOf(id);
+  if (idx === -1) selected.push(id);
+  else selected.splice(idx, 1);
+
+  Object.keys(markers).forEach(k => {
+    const mk = markers[k];
+    if (selected.includes(Number(k))) mk.setStyle({ color: '#00d4ff', fillColor: '#00d4ff' });
+    else mk.setStyle({ color: '#f00', fillColor: '#f00' });
+  });
+}
+
+// ================= NAV CALC =================
+function haversineNM(lat1, lon1, lat2, lon2) {
+  const R = 6371e3, toRad = v => v * Math.PI / 180;
+  const φ1 = toRad(lat1), φ2 = toRad(lat2), Δφ = toRad(lat2 - lat1), Δλ = toRad(lon2 - lon1);
+  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) / 1852;
+}
+
+function calculateBearing(lat1, lon1, lat2, lon2) {
+  const toRad = v => v * Math.PI / 180, toDeg = v => v * 180 / Math.PI;
+  const φ1 = toRad(lat1), φ2 = toRad(lat2), Δλ = toRad(lon2 - lon1);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function makeRoute() {
+  if (selected.length < 2) { alert('Select at least 2 waypoints'); return; }
+
+  if (routeLayer) map.removeLayer(routeLayer);
+  checkpointMarkers.forEach(cp => map.removeLayer(cp));
+  checkpointMarkers = [];
+
+  const latlngs = selected.map(id => {
+    const w = waypoints.find(wp => wp.id === id);
+    return [w.lat, w.lon];
+  });
+
+  routeLayer = L.polyline(latlngs, { color: '#00d4ff', weight: 2, opacity: 0.85 }).addTo(map);
+
+  let total = 0;
+  const speed = parseFloat(document.getElementById('speedInput').value) || 0;
+  routeSummaryDiv.innerHTML = '';
+
+  for (let i = 0; i < selected.length - 1; i++) {
+    const a = waypoints.find(w => w.id === selected[i]);
+    const b = waypoints.find(w => w.id === selected[i + 1]);
+    const dist = haversineNM(a.lat, a.lon, b.lat, b.lon);
+    const bearing = calculateBearing(a.lat, a.lon, b.lat, b.lon);
+    total += dist;
+    const time = speed > 0 ? (dist / speed * 60) : 0;
+
+    routeSummaryDiv.innerHTML += `${a.name} → ${b.name}: ${dist.toFixed(2)} NM, ${bearing.toFixed(1)}°, ${time.toFixed(1)} min<br>`;
+  }
+  routeSummaryDiv.innerHTML += `<b>Total: ${total.toFixed(2)} NM</b>`;
+}
+
+function clearRoute() {
+  if (routeLayer) map.removeLayer(routeLayer);
+  routeLayer = null;
+  selected = [];
+  routeSummaryDiv.innerHTML = '';
+  Object.values(markers).forEach(m => m.setStyle({ color: '#f00', fillColor: '#f00' }));
+}
+
+// ================= STORAGE =================
+function saveLocal() { localStorage.setItem('map_waypoints_v5', JSON.stringify(waypoints)); }
+function loadLocal() {
+  const data = localStorage.getItem('map_waypoints_v5');
+  if (!data) return;
+  try { JSON.parse(data).forEach(w => addWaypoint(w.lat, w.lon, w.name)); }
+  catch(e) { console.error(e); }
+}
+
+// ================= EVENTS =================
+map.on('click', e => {
+  coordsOut.textContent = formatCoordinates(e.latlng.lat, e.latlng.lng);
+  addWaypoint(e.latlng.lat, e.latlng.lng);
+});
+
+document.getElementById('goBtn').onclick = () => {
+  const lat = dmsToDecimal(
+    document.getElementById('latDeg').value,
+    document.getElementById('latMin').value,
+    document.getElementById('latDir').value
+  );
+  const lon = dmsToDecimal(
+    document.getElementById('lonDeg').value,
+    document.getElementById('lonMin').value,
+    document.getElementById('lonDir').value
+  );
+  if (isNaN(lat) || isNaN(lon)) { alert('Invalid coordinates'); return; }
+  map.setView([lat, lon], 12);
+  addWaypoint(lat, lon, 'Manual');
+};
+
+document.getElementById('routeBtn').onclick  = makeRoute;
+document.getElementById('clearRouteBtn').onclick = clearRoute;
+
+loadLocal();
+</script>
+
+</body>
+</html>
