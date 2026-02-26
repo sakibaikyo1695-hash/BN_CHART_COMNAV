@@ -569,7 +569,7 @@ function makeRoute() {
     return [w.lat, w.lon];
   });
 
-  routeLayer = L.polyline(latlngs, { color: '#00d4ff', weight: 2, opacity: 0.85 }).addTo(map);
+  routeLayer = L.polyline(latlngs, { color: '#003399', weight: 5, opacity: 1 }).addTo(map);
 
   let total = 0;
   const speed = parseFloat(document.getElementById('speedInput').value) || 0;
